@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}
+    Список курсов
+{% endblock %}
+{% block menu %}
+	{% include "inc-menu.html" %}
+{% endblock %}
+{% block body %}
+    <div>
+        <a href="/create_course/?id={{id}}">cоздать новый курс</a>
+        <br>
+        <h3 class="mt-4">Список курсов для категории "{{ name }}"</h3>
+        <ul>
+            {% for item in objects_list %}
+                <li>
+                    {{ item.name }}
+                    <a class="mx-2" href="/copy_course/?name={{ item.name }}">скопировать курс</a>
+                    <a class="mx-2" href="/update_course/?name={{ item.name }}">изменить курс</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}

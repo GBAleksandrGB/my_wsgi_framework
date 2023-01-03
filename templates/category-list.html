@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Список курсов
+{% endblock %}
+{% block menu %}
+    {% include "inc-menu.html" %}
+{% endblock %}
+{% block body %}
+    <div>
+        <h3 class="mt-4">Список категорий</h3>
+        {% for item in objects_list %}
+        <ul>
+            <li>
+                {{ item.name }}<span class="mx-2">Количество курсов: {{ item.course_count() }}</span>
+                <a class="mx-2" href="/courses_list/?id={{ item.id }}">Показать курсы</a>
+                <a class="mx-2" href="/create_category/?id={{ item.id }}">Создать подкатегорию</a>
+            </li>
+        </ul>
+        {% endfor %}
+    </div>
+{% endblock %}

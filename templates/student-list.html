@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}
+    Создание студента
+{% endblock %}
+{% block menu %}
+	{% include "inc-menu.html" %}
+{% endblock %}
+{% block body %}
+	<div>
+        <a href="/create_student/">создать студента</a>
+        <br>
+        <a href="/add_student/">добавить студента на курс</a>
+	</div>
+    <div>
+        <h3 class="mt-4">Список студентов</h3>
+        <ul>
+            {% for item in objects_list %}
+            <li>
+                {{item.name}}
+                <ul>
+                    {% if item.courses %}
+                        {% for course in item.courses %}
+                        <li>
+                            {{course.name}}
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        Студент еще не добавлен на курс.
+                    {% endif %}
+                </ul>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}

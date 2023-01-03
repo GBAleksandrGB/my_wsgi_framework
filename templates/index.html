@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Главная страница
+{% endblock %}
+
+{% block body %}
+<div class="d-flex flex-wrap justify-content-around">
+
+     <div class="d-grid gap-2 col-8 mx-auto">
+        <a class="btn btn-light border shadow-sm p-3 mt-5 bg-body rounded" type="submit" href="/create_category/">
+            Создать новую категорию
+        </a>
+        <a class="btn btn-light border shadow-sm p-3 mt-3 bg-body rounded" type="submit" href="/category_list/">
+            Список существующих категорий
+        </a>
+        <a class="btn btn-light border shadow-sm p-3 mt-3 bg-body rounded" type="submit" href="/student_list/">
+            Список студентов</a>
+        <a class="btn btn-light border shadow-sm p-3 mt-3 bg-body rounded" type="submit" href="/create_student/">
+            Создать студента</a>
+        <a class="btn btn-light border shadow-sm p-3 mt-3 bg-body rounded" type="submit" href="/add_student/">
+            Добавить студента на курс</a>
+    </div>
+
+</div>
+{% endblock %}
