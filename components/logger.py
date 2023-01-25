@@ -1,4 +1,4 @@
-from writers import FileWriter, ConsoleWriter
+from components.writers import FileWriter, ConsoleWriter
 
 
 class SingletonByName(type):

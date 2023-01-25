@@ -1,18 +1,20 @@
-from datetime import date
-
 from jinja2 import Environment, FileSystemLoader
 
-from decorators import AppRoute, Timer
-from logger import Logger
-from models import Engine
-from observer import SmsNotifier, EmailNotifier
-from serializer import BaseSerializer
+from components.based_views import TemplateView, ListView, UpdateView, CreateView
+from components.decorators import AppRoute
+from components.logger import Logger
+from components.models import Engine, MapperRegistry
+from components.observer import SmsNotifier, EmailNotifier
+from components.serializer import BaseSerializer
+from components.unit_of_work import UnitOfWork
 
 routes = {}
 site = Engine()
 logger = Logger('test')
 email_notifier = EmailNotifier()
 sms_notifier = SmsNotifier()
+UnitOfWork.new_current()
+UnitOfWork.get_current().set_mapper_registry(MapperRegistry)
 
 
 def render(template_name, folder='templates', **context):
@@ -20,98 +22,6 @@ def render(template_name, folder='templates', **context):
     env.loader = FileSystemLoader(folder)
     template = env.get_template(template_name)
     return template.render(**context)
-
-
-class TemplateView:
-    """Базовый класс-контроллер для рендеринга шаблона,
-    шаблонный паттерн
-    """
-
-    template_name = 'template.html'
-
-    def get_template(self):
-        return self.template_name
-
-    def get_context_data(self, request):
-        return {}
-
-    def render_template_with_context(self, request):
-        template_name = self.get_template()
-        context = self.get_context_data(request)
-        return '200 OK', render(template_name, **context)
-
-    @Timer('Call base TemplateView')
-    def __call__(self, request):
-        logger.log(f'Вызов шаблона {self.template_name}')
-        return self.render_template_with_context(request)
-
-
-class ListView(TemplateView):
-    """Базовый класс-контроллер для отображения списка данных по запросу,
-    шаблонный паттерн
-    """
-
-    queryset = []
-    template_name = 'list.html'
-    context_object_name = 'objects_list'
-
-    def get_queryset(self, request):
-        return self.queryset
-
-    def get_context_object_name(self):
-        return self.context_object_name
-
-    def get_context_data(self, request):
-        queryset = self.get_queryset(request)
-        context_object_name = self.get_context_object_name()
-        context = {context_object_name: queryset}
-        return context
-
-
-class CreateView(TemplateView):
-    """Базовый класс-контроллер для создания данных,
-    шаблонный паттерн
-    """
-
-    template_name = 'create.html'
-
-    @staticmethod
-    def get_request_data(request):
-        return request['params']
-
-    def create_obj(self, params):
-        pass
-
-    @Timer('Call base CreateView')
-    def __call__(self, request):
-
-        if request['method'] == 'POST':
-            data = self.get_request_data(request)
-            self.create_obj(data)
-            return self.render_template_with_context(request)
-        else:
-            return super().__call__(request)
-
-
-class UpdateView(TemplateView):
-    template_name = 'update.html'
-
-    @staticmethod
-    def get_request_data(request):
-        return request['params']
-
-    def update_obj(self, params):
-        pass
-
-    @Timer('Call base UpdateView')
-    def __call__(self, request):
-
-        if request['method'] == 'POST':
-            data = self.get_request_data(request)
-            self.update_obj(data)
-            return self.render_template_with_context(request)
-        else:
-            return super().__call__(request)
 
 
 @AppRoute(routes=routes, url='/')
@@ -122,7 +32,8 @@ class Index(TemplateView):
 
     def get_context_data(self, request):
         context = super().get_context_data(request)
-        context['cur_date'] = date.today().strftime('%d.%m.%Y')
+        context['cur_date'] = request.get('cur_date')
+        context['location'] = request.get('location')
         return context
 
 
@@ -271,7 +182,10 @@ class StudentListView(ListView):
     """Page-controller - страница для отображения списка студентов"""
 
     template_name = 'student-list.html'
-    queryset = site.students
+
+    def get_queryset(self, request):
+        students = MapperRegistry.get_current_mapper('student').all()
+        return students
 
 
 @AppRoute(routes=routes, url='/create_student/')
@@ -282,7 +196,10 @@ class StudentCreateView(CreateView):
 
     def create_obj(self, data: dict):
         name = site.decode_value(data['name'])
-        new_student = site.create_user('student', name)
+        new_student = site.create_user('student')
+        schema = {'name': name}
+        new_student.mark_new(schema)
+        UnitOfWork.get_current().commit()
         site.students.append(new_student)
 
 
@@ -295,7 +212,7 @@ class AddStudentByCourseView(CreateView):
     def get_context_data(self, request):
         context = super().get_context_data(request)
         context['courses'] = site.courses
-        context['students'] = site.students
+        context['students'] = MapperRegistry.get_current_mapper('student').all()
         return context
 
     def create_obj(self, data: dict):
@@ -304,9 +221,15 @@ class AddStudentByCourseView(CreateView):
                 and data['student'] != 'Выберите студента':
             course_name = site.decode_value(data['course'])
             course = site.get_course(course_name)
-            student_name = site.decode_value(data['student'])
-            student = site.get_student(student_name)
+            student_id = site.decode_value(data['student'])
+            student = MapperRegistry.get_current_mapper('student').get_by_student_id(student_id)
             course.add_student(student)
+            student_courses = student.courses
+            student_courses = [] if student_courses is None else [student_courses]
+            student_courses.append(course.name)
+            schema = {'courses': ', '.join(student_courses)}
+            student.mark_dirty(schema)
+            UnitOfWork.get_current().commit()
 
 
 @AppRoute(routes=routes, url='/api/<id>/')

@@ -5,6 +5,11 @@
 {% endblock %}
 
 {% block body %}
+{% if location.city != 'Not found' %}
+    <p class="fst-italic text-center">{{ cur_date }}  |  {{ location.city }}</p>
+{% else %}
+    <p class="fst-italic text-center">{{ cur_date }}  |  localhost</p>
+{% endif %}
 <div class="d-flex flex-wrap justify-content-around">
 
      <div class="d-grid gap-2 col-8 mx-auto">

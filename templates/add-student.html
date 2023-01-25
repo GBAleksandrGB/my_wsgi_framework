@@ -22,7 +22,7 @@
         <select class="form-select mt-3 w-50" name="student">
             <option selected>Выберите студента</option>
             {% for item in students %}
-            <option value="{{item.name}}">{{item.name}}</option>
+            <option value="{{item.id}}">{{item.id}} {{item.name}}</option>
             {% endfor %}
         </select>
         <button class="mt-3" type="submit">Записать</button>

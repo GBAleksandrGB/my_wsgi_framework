@@ -19,9 +19,9 @@
                 {{item.name}}
                 <ul>
                     {% if item.courses %}
-                        {% for course in item.courses %}
+                        {% for course in item.courses.split(', ') %}
                         <li>
-                            {{course.name}}
+                            {{course}}
                         </li>
                         {% endfor %}
                     {% else %}
